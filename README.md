@@ -5,4 +5,4 @@ This tool was created to demostrate the threats of misconfiguration of web servi
 # Usage
 
 1. Change `domain` variable to the hostname you want to check
-2. Change `ipAddress2` variable to the subnet you decide to scan, e.g: Vultr, Godaddy, DigitalOcean, etc.
+2. Change `ipAddresses2` variable to the subnet you decide to scan, e.g: Vultr, Godaddy, DigitalOcean, etc.
