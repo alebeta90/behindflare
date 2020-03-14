@@ -7,23 +7,27 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"sync"
 )
 
-var domain = "gonkar.com"
+var domain = os.Args[1]
+var subnet = os.Args[2]
 var bodySize int
 var jobcount = 1000
-var limit = 30
+var limit = 50
 
 func main() {
 	fmt.Println("Analyzing Domain: ", domain)
 
 	siteInfo()
 
-	ipAddresses2, err := Hosts("104.156.224.0/19")
+	ipAddresses2, err := Hosts(subnet)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	fmt.Println("Number of IPs to scan: ", len(ipAddresses2))
 	// The `main` func must not finished before all jobs are done. We use a
 	// WaitGroup to wait for all of them.
 	wg := new(sync.WaitGroup)
