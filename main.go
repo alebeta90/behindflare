@@ -11,14 +11,41 @@ import (
 	"sync"
 )
 
-var domain = os.Args[1]
-var subnet = os.Args[2]
+var protocol = os.Args[1]
+var domain = os.Args[2]
+var subnet = os.Args[3]
 var bodySize int
 var jobcount = 1000
 var limit = 50
 
+// Colors - this are colors to use to print in stdout
+var (
+	Info = Teal
+	Warn = Yellow
+	Fata = Red
+)
+
+var (
+	Black   = Color("\033[1;30m%s\033[0m")
+	Red     = Color("\033[1;31m%s\033[0m")
+	Green   = Color("\033[1;32m%s\033[0m")
+	Yellow  = Color("\033[1;33m%s\033[0m")
+	Purple  = Color("\033[1;34m%s\033[0m")
+	Magenta = Color("\033[1;35m%s\033[0m")
+	Teal    = Color("\033[1;36m%s\033[0m")
+	White   = Color("\033[1;37m%s\033[0m")
+)
+
+func Color(colorString string) func(...interface{}) string {
+	sprint := func(args ...interface{}) string {
+		return fmt.Sprintf(colorString,
+			fmt.Sprint(args...))
+	}
+	return sprint
+}
+
 func main() {
-	fmt.Println("Analyzing Domain: ", domain)
+	fmt.Println(Info("Analyzing Domain: "), domain)
 
 	siteInfo()
 
@@ -27,7 +54,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Number of IPs to scan: ", len(ipAddresses2))
+	fmt.Println(Info("Number of IPs to scan: "), len(ipAddresses2))
 	// The `main` func must not finished before all jobs are done. We use a
 	// WaitGroup to wait for all of them.
 	wg := new(sync.WaitGroup)
@@ -71,7 +98,7 @@ func main() {
 
 func scanBlock(k int, i string) string {
 
-	req, err := http.NewRequest("GET", "https://"+i, nil)
+	req, err := http.NewRequest("GET", protocol+"://"+i, nil)
 	if err != nil {
 		log.Fatal("Error reading request. ", err)
 	}
@@ -101,11 +128,11 @@ func scanBlock(k int, i string) string {
 
 	if resp.StatusCode == 200 && len(body) == bodySize {
 
-		fmt.Printf("##############-HOST FOUND-###################\n")
-		fmt.Println("Server IP: ", i)
-		fmt.Println("HTTP Status: ", resp.StatusCode)
-		fmt.Println("Body Length: ", len(body))
-		fmt.Printf("#############################################\n")
+		fmt.Printf(Green("##############-HOST FOUND-###################\n"))
+		fmt.Println(Green("Server IP: "), i)
+		fmt.Println(Green("HTTP Status: "), resp.StatusCode)
+		fmt.Println(Green("Body Length: "), len(body))
+		fmt.Printf(Green("#############################################\n"))
 		defer resp.Body.Close()
 		//break
 	}
@@ -166,7 +193,7 @@ func siteInfo() {
 		log.Fatal("Error reading body", err)
 	}
 
-	fmt.Println("Site Body Length: ", len(body))
+	fmt.Println(Info("Site Body Length: "), len(body))
 	bodySize = len(body)
 
 	defer resp.Body.Close()
