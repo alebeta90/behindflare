@@ -9,6 +9,6 @@ This tool was created to demostrate the threats of misconfiguration of web servi
 
 Replace the values for the kind of target you are scanning
 
-schema = http or https
-domain = example.com
-subnet = 192.168.0.1/24
+schema = http or https  
+domain = example.com  
+subnet = 192.168.0.1/24  
