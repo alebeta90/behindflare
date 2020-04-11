@@ -4,9 +4,11 @@ This tool was created to demostrate the threats of misconfiguration of web servi
 
 # Usage
 
-1. Change `domain` variable to the hostname you want to check
-2. Change `ipAddresses2` variable to the subnet you decide to scan, e.g: Vultr, Godaddy, DigitalOcean, etc.
+1. Download the binary `behindflare`
+2. Execute it like `./behindflare schema domain subnet`  
 
-### Run it
+Replace the values for the kind of target you are scanning
 
-`go run main.go`
+schema = http or https
+domain = example.com
+subnet = 192.168.0.1/24
