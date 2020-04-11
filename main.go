@@ -12,15 +12,13 @@ import (
 	"sync"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/cheggaaa/pb/v3"
 )
 
 var protocol = os.Args[1]
 var domain = os.Args[2]
 var subnet = os.Args[3]
 var OriginalTitle string
-var jobcount = 1000
-var limit = 50
+var limit = 100
 
 // Colors - this are colors to use to print in stdout
 var (
@@ -70,8 +68,6 @@ func main() {
 	// concurrently executing jobs.
 	sem := make(chan struct{}, limit)
 
-	bar := pb.StartNew(len(ipAddresses2))
-
 	// We run each job in its own goroutine but use the semaphore to limit
 	// their concurrent execution.
 	for k, i := range ipAddresses2 {
@@ -97,7 +93,6 @@ func main() {
 			// Do the actual work.
 			scanBlock(k, i)
 			//fmt.Printf("IP scanned is %s\n", result)
-			bar.Increment()
 
 		}(k, i)
 	}
@@ -179,7 +174,7 @@ func scanBlock(k int, i string) string {
 		fmt.Println(Green("Title: "), title)
 		fmt.Printf(Green("#############################################\n"))
 		defer resp.Body.Close()
-		break
+
 	}
 	return i
 
