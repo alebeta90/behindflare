@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/cheggaaa/pb/v3"
 )
 
 var protocol = os.Args[1]
@@ -69,6 +70,8 @@ func main() {
 	// concurrently executing jobs.
 	sem := make(chan struct{}, limit)
 
+	bar := pb.StartNew(len(ipAddresses2))
+
 	// We run each job in its own goroutine but use the semaphore to limit
 	// their concurrent execution.
 	for k, i := range ipAddresses2 {
@@ -82,6 +85,7 @@ func main() {
 
 		// Now we have acquired the semaphore and can start a goroutine for
 		// this job. Note that we must capture `i` as an argument.
+
 		go func(k int, i string) {
 			// When the work of this goroutine has been done, we decrement the
 			// WaitGroup.
@@ -93,6 +97,7 @@ func main() {
 			// Do the actual work.
 			scanBlock(k, i)
 			//fmt.Printf("IP scanned is %s\n", result)
+			bar.Increment()
 
 		}(k, i)
 	}
