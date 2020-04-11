@@ -8,13 +8,16 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 var protocol = os.Args[1]
 var domain = os.Args[2]
 var subnet = os.Args[3]
-var bodySize int
+var OriginalTitle string
 var jobcount = 1000
 var limit = 50
 
@@ -46,7 +49,7 @@ func Color(colorString string) func(...interface{}) string {
 
 func main() {
 
-	banner()
+	Banner()
 
 	fmt.Println(Info("Analyzing Domain: "), domain)
 
@@ -99,6 +102,36 @@ func main() {
 
 }
 
+// Get Body Size
+func siteInfo() {
+
+	req, err := http.NewRequest("GET", "https://"+domain, nil)
+	if err != nil {
+		log.Fatal("Error reading request. ", err)
+	}
+
+	client := http.DefaultClient
+
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal("Error reading body", err)
+	}
+
+	doc, _ := goquery.NewDocumentFromReader(strings.NewReader(string(body)))
+
+	OriginalTitle = doc.Find("title").Eq(0).Text()
+
+	fmt.Println(Info("Title: "), OriginalTitle)
+
+}
+
 func scanBlock(k int, i string) string {
 
 	req, err := http.NewRequest("GET", protocol+"://"+i, nil)
@@ -129,15 +162,19 @@ func scanBlock(k int, i string) string {
 		log.Fatal("Error reading body", err)
 	}
 
-	if resp.StatusCode == 200 && len(body) == bodySize {
+	doc, _ := goquery.NewDocumentFromReader(strings.NewReader(string(body)))
 
+	title := doc.Find("title").Eq(0).Text()
+
+	switch OriginalTitle {
+	case title:
 		fmt.Printf(Green("##############-HOST FOUND-###################\n"))
 		fmt.Println(Green("Server IP: "), i)
 		fmt.Println(Green("HTTP Status: "), resp.StatusCode)
-		fmt.Println(Green("Body Length: "), len(body))
+		fmt.Println(Green("Title: "), title)
 		fmt.Printf(Green("#############################################\n"))
 		defer resp.Body.Close()
-		//break
+		break
 	}
 	return i
 
@@ -173,39 +210,4 @@ func inc(ip net.IP) {
 			break
 		}
 	}
-}
-
-// Get Body Size
-func siteInfo() {
-
-	req, err := http.NewRequest("GET", "https://"+domain, nil)
-	if err != nil {
-		log.Fatal("Error reading request. ", err)
-	}
-
-	client := http.DefaultClient
-
-	resp, err := client.Do(req)
-	if err != nil {
-		panic(err)
-
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal("Error reading body", err)
-	}
-
-	fmt.Println(Info("Site Body Length: "), len(body))
-	bodySize = len(body)
-
-	defer resp.Body.Close()
-
-}
-
-func banner() {
-	fmt.Printf(Magenta("################################################################\n"))
-	fmt.Printf(Magenta("Author: Alejandro Betancor - alebeta@gonkar.com\n"))
-	fmt.Printf(Magenta("DISCLAIMER: This program had been developed for research and \n educational purpose. Its usage for negative action is going\n against creator will.\n"))
-	fmt.Printf(Magenta("################################################################\n"))
 }
