@@ -2,71 +2,48 @@ package main
 
 import (
 	"crypto/tls"
-	"fmt"
+	"flag"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 
 	"github.com/PuerkitoBio/goquery"
-)
-
-var protocol = os.Args[1]
-var domain = os.Args[2]
-var subnet = os.Args[3]
-var OriginalTitle string
-var limit = 100
-
-// Colors - this are colors to use to print in stdout
-var (
-	Info = Teal
-	Warn = Yellow
-	Fata = Red
+	"github.com/fatih/color"
 )
 
 var (
-	Black   = Color("\033[1;30m%s\033[0m")
-	Red     = Color("\033[1;31m%s\033[0m")
-	Green   = Color("\033[1;32m%s\033[0m")
-	Yellow  = Color("\033[1;33m%s\033[0m")
-	Purple  = Color("\033[1;34m%s\033[0m")
-	Magenta = Color("\033[1;35m%s\033[0m")
-	Teal    = Color("\033[1;36m%s\033[0m")
-	White   = Color("\033[1;37m%s\033[0m")
+	protocol      = flag.String("proto", "http", "The protocol used by the site behind CF")
+	domain        = flag.String("domain", "example.com", "Domain target")
+	subnet        = flag.String("subnet", "192.168.0.1/24", "Subnet to scan")
+	OriginalTitle string
+	limit         = flag.Int("jobs", 20, "Number of parallel jobs")
 )
-
-func Color(colorString string) func(...interface{}) string {
-	sprint := func(args ...interface{}) string {
-		return fmt.Sprintf(colorString,
-			fmt.Sprint(args...))
-	}
-	return sprint
-}
 
 func main() {
+	flag.Parse()
 
 	Banner()
 
-	fmt.Println(Info("Analyzing Domain: "), domain)
+	color.Cyan("Analyzing Domain: %v", *domain)
 
 	siteInfo()
 
-	ipAddresses2, err := Hosts(subnet)
+	ipAddresses2, err := Hosts(*subnet)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println(Info("Number of IPs to scan: "), len(ipAddresses2))
+	color.Cyan("Number of IPs to scan: %v", len(ipAddresses2))
 	// The `main` func must not finished before all jobs are done. We use a
 	// WaitGroup to wait for all of them.
 	wg := new(sync.WaitGroup)
 
 	// We use a buffered channel as a semaphore to limit the number of
 	// concurrently executing jobs.
-	sem := make(chan struct{}, limit)
+	sem := make(chan struct{}, *limit)
 
 	// We run each job in its own goroutine but use the semaphore to limit
 	// their concurrent execution.
@@ -105,18 +82,11 @@ func main() {
 // Get Body Size
 func siteInfo() {
 
-	req, err := http.NewRequest("GET", "https://"+domain, nil)
+	resp, err := http.Get("https://" + *domain)
 	if err != nil {
 		log.Fatal("Error reading request. ", err)
 	}
 
-	client := http.DefaultClient
-
-	resp, err := client.Do(req)
-	if err != nil {
-		panic(err)
-
-	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -128,13 +98,11 @@ func siteInfo() {
 
 	OriginalTitle = doc.Find("title").Eq(0).Text()
 
-	fmt.Println(Info("Title: "), OriginalTitle)
-
 }
 
 func scanBlock(k int, i string) string {
 
-	req, err := http.NewRequest("GET", protocol+"://"+i, nil)
+	req, err := http.NewRequest("GET", *protocol+"://"+i, nil)
 	if err != nil {
 		log.Fatal("Error reading request. ", err)
 	}
@@ -142,7 +110,7 @@ func scanBlock(k int, i string) string {
 	//fmt.Println("Job Number: ", j, "Using IP: ", ips)
 	//fmt.Println("Using IP: ", i)
 
-	req.Host = domain
+	req.Host = *domain
 
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -168,11 +136,10 @@ func scanBlock(k int, i string) string {
 
 	switch OriginalTitle {
 	case title:
-		fmt.Printf(Green("##############-HOST FOUND-###################\n"))
-		fmt.Println(Green("Server IP: "), i)
-		fmt.Println(Green("HTTP Status: "), resp.StatusCode)
-		fmt.Println(Green("Title: "), title)
-		fmt.Printf(Green("#############################################\n"))
+		color.Green("##############-HOST FOUND-###################\n")
+		color.Green("Server IP: %v", i)
+		color.Green("HTTP Status: %v", resp.StatusCode)
+		color.Green("#############################################\n")
 		defer resp.Body.Close()
 
 	}
