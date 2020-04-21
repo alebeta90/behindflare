@@ -1,14 +1,31 @@
 # Behindflare
 
-This tool was created to demostrate the threats of misconfiguration of web services using CloudFlare as reverse proxy and WAF.  
+This tool was created as a **Proof of Concept** to reveal the threats related with web service misconfiguration using CloudFlare as reverse proxy and WAF.  
+
+## Problem
+
+Most of Cloudflare users believe that just setting up the reverse proxy which provide security protection, will secure their backend servers. This group of users are not aware that the attacker can find access to the backend servers if he finds their ip addresses. There are plenty of passive and active techniques that can lead you to get the IP address of the Web App server.  
+
+## Service
+
+If you would like to protect your servers against this kind of attack you can contact us at [Gonkar IT Security LTD](https://gonkar.com/gonkar-team-support/)  
 
 # Usage
 
-1. Download the binary `behindflare`
-2. Execute it like `./behindflare schema domain subnet`  
 
-Replace the values for the kind of target you are scanning
+``` bash
+./behindflare -h
+Usage of ./behindflare:
+  -domain string
+    	Domain target (default "example.com")
+  -jobs int
+    	Number of parallel jobs (default 20)
+  -proto string
+    	The protocol used by the site behind CF (default "http")
+  -subnet string
+    	Subnet to scan (default "192.168.0.1/24")
+``` 
 
-schema = http or https  
-domain = example.com  
-subnet = 192.168.0.1/24  
+# Disclaimer
+
+This tool had been developed for research and educational purpose. Its usage for illegal actions is against creator will.
