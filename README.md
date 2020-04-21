@@ -1,10 +1,11 @@
 # Behindflare
 
-This tool was created as a **Proof of Concept** to reveal the threats related with web service misconfiguration using CloudFlare as reverse proxy and WAF.  
+This tool was created as a **Proof of Concept**  to reveal the threats related to web service misconfiguration using CloudFlare as reverse proxy and WAF.
+
 
 ## Problem
 
-Most of Cloudflare users believe that just setting up the reverse proxy which provide security protection, will secure their backend servers. This group of users are not aware that the attacker can find access to the backend servers if he finds their ip addresses. There are plenty of passive and active techniques that can lead you to get the IP address of the Web App server.  
+Most of CloudFlare users believe, that just setting up the reverse proxy which ensures security protection, will secure their back-end servers. This group of users are not aware that the attacker can find access to the back-end servers if he finds their IP addresses. There are plenty of passive and active techniques that can lead you to get the IP address of the Web App server.
 
 ## Service
 
