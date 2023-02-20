@@ -13,16 +13,19 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/fatih/color"
+	"github.com/schollz/progressbar/v3"
 )
 
 func main() {
-	var protocol, domain, subnet string
+	var protocol, domain, subnet, region string
 	var limit int
 	var mu sync.Mutex
 	var numScanned int
+	var ipAddresses []string
 	flag.StringVar(&protocol, "proto", "http", "The protocol used by the site behind CF")
 	flag.StringVar(&domain, "domain", "example.com", "Domain target")
-	flag.StringVar(&subnet, "subnet", "192.168.0.1/24", "Subnet to scan")
+	flag.StringVar(&subnet, "subnet", "", "Subnet to scan")
+	flag.StringVar(&region, "region", "", "AWS region to scan (optional)")
 	flag.IntVar(&limit, "jobs", 20, "Number of parallel jobs")
 	flag.Parse()
 
@@ -35,12 +38,25 @@ func main() {
 		log.Fatalf("Error reading site title: %v", err)
 	}
 
-	ipAddresses, err := getHosts(subnet)
-	if err != nil {
-		log.Fatalf("Error getting IP addresses: %v", err)
+	// If the subnet is specified, add it to the list of IP addresses to scan.
+	if subnet != "" {
+		ipAddresses, err = getHosts(subnet)
+		if err != nil {
+			log.Fatalf("Error getting IP addresses: %v", err)
+		}
+
+		color.Cyan("Number of IPs to scan: %v", len(ipAddresses))
 	}
 
-	color.Cyan("Number of IPs to scan: %v", len(ipAddresses))
+	// If the region is specified, get the IP address ranges for that region
+	// from the AWS IP address ranges URL.
+	if region != "" {
+		ipAddresses = AWSRegionSubnet(region)
+		color.Cyan("Number of IPs to scan: %v", len(ipAddresses))
+	}
+
+	// Create a progress bar with the total number of hosts to scan.
+	bar := progressbar.Default(int64(len(ipAddresses)))
 
 	// The `main` func must not finish before all jobs are done. We use a
 	// WaitGroup to wait for all of them.
@@ -72,13 +88,14 @@ func main() {
 
 			// Do the actual work.
 			if err := scanHost(k, i, protocol, domain, originalTitle); err != nil {
-				log.Printf("Error scanning host %s: %v", i, err)
+				//log.Printf("Error scanning host %s: %v", i, err)
 			}
 
 			// Update the counter and print progress.
 			mu.Lock()
 			numScanned++
-			if numScanned%100 == 0 {
+			bar.Add(1)
+			if numScanned%len(ipAddresses) == 0 {
 				color.Cyan("Scanned %d hosts", numScanned)
 			}
 			mu.Unlock()
@@ -87,6 +104,9 @@ func main() {
 
 	// Wait for all jobs to finish.
 	wg.Wait()
+
+	// Finish the progress bar
+	bar.Finish()
 }
 
 func getSiteTitle(protocol, domain string) (string, error) {
